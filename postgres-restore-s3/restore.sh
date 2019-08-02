@@ -18,6 +18,12 @@ if [ "${S3_BUCKET}" = "**None**" ]; then
   exit 1
 fi
 
+if [ "${S3_ENDPOINT}" == "**None**" ]; then
+  AWS_ARGS=""
+else
+  AWS_ARGS="--endpoint-url ${S3_ENDPOINT}"
+fi
+
 if [ "${POSTGRES_DATABASE}" = "**None**" ]; then
   echo "You need to set the POSTGRES_DATABASE environment variable."
   exit 1
@@ -53,12 +59,14 @@ POSTGRES_HOST_OPTS="-h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER"
 
 echo "Finding latest backup"
 
-LATEST_BACKUP=$(aws s3 ls s3://$S3_BUCKET/$S3_PREFIX/ | sort | tail -n 1 | awk '{ print $4 }')
+LATEST_BACKUP=$(aws $AWS_ARGS s3 ls s3://$S3_BUCKET/$S3_PREFIX/ | sort | tail -n 1 | awk '{ print $4 }')
 
 echo "Fetching ${LATEST_BACKUP} from S3"
 
-aws s3 cp s3://$S3_BUCKET/$S3_PREFIX/${LATEST_BACKUP} dump.sql.gz
+aws $AWS_ARGS s3 cp s3://$S3_BUCKET/$S3_PREFIX/${LATEST_BACKUP} dump.sql.gz
 gzip -d dump.sql.gz
+
+pg_restore -l dump.sql | grep -vE "$EXCLUDED_TABLES" > restore.list
 
 if [ "${DROP_PUBLIC}" == "yes" ]; then
 	echo "Recreating the public schema"
@@ -67,7 +75,6 @@ fi
 
 echo "Restoring ${LATEST_BACKUP}"
 
-psql $POSTGRES_HOST_OPTS -d $POSTGRES_DATABASE < dump.sql
+pg_restore --verbose --clean --no-acl --no-owner $POSTGRES_HOST_OPTS -d $POSTGRES_DATABASE -L restore.list dump.sql || true
 
 echo "Restore complete"
-
