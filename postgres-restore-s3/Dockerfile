@@ -1,6 +1,5 @@
 FROM alpine:3.7
 LABEL maintainer="Johannes Schickling <schickling.j@gmail.com>"
-
 ADD install.sh install.sh
 RUN sh install.sh && rm install.sh
 
@@ -17,6 +16,6 @@ ENV S3_PREFIX 'backup'
 ENV S3_ENDPOINT **None**
 ENV DROP_PUBLIC 'no'
 
-ADD restore.sh restore.sh
-
-CMD ["sh", "restore.sh"]
+ADD restore.sh /bin/
+RUN chmod +x /bin/restore.sh
+ENTRYPOINT /bin/restore.sh
