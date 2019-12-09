@@ -19,7 +19,8 @@ ENV S3_ENDPOINT **None**
 ENV S3_S3V4 no
 ENV SCHEDULE **None**
 
-ADD run.sh /bin/
-ADD backup.sh .
+ADD backup.sh /bin/backup.sh
+RUN chmod +x /bin/backup.sh
+ADD run.sh /bin/run.sh
 RUN chmod +x /bin/run.sh
 ENTRYPOINT /bin/run.sh
