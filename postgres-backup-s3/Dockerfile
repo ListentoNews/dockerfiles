@@ -22,4 +22,5 @@ ENV SCHEDULE **None**
 ADD run.sh /bin/
 ADD backup.sh /bin/
 RUN chmod +x /bin/run.sh
+RUN chmod +x /bin/backup.sh
 ENTRYPOINT /bin/run.sh
